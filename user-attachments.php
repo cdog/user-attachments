@@ -2,7 +2,7 @@
 
 /*
 Plugin Name: User Attachments
-Plugin URI: http://github.com/cdog/user-attachments
+Plugin URI: https://github.com/cdog/user-attachments
 Description: Allows registered users to submit and manage their attachments.
 Version: 1.0.0
 Author: Cătălin Dogaru
