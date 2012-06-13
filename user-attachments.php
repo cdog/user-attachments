@@ -86,6 +86,8 @@ function ua_delete_user_attachments($attachments) {
         if (isset($_POST['ua_attachment_delete_id_' . $user_attachment])
             && wp_verify_nonce($_POST['ua_attachment_delete_id_' . $user_attachment], 'ua_attachment_delete_' . $user_attachment)
         ) {
+            //echo '<br /><b>' . $user_attachment . '<br />' . get_post_thumbnail_id($user_attachment) . '</b><br />';
+
             if ($post_attachment_id = get_post_thumbnail_id($user_attachment)) {
                 wp_delete_attachment($post_attachment_id, true);
             }
@@ -111,7 +113,7 @@ function ua_get_user_attachments_table($user_id) {
         return 0;
     }
 
-    $out = '<p>' . __('Pending attachments') . '</p>';
+    $out  = '<p>' . __('Pending attachments') . '</p>';
     $out .= '<form action="" method="post">';
     $out .= wp_nonce_field('ua_form_delete', 'ua_form_delete');
     $out .= '<table id="user_attachments">';
@@ -194,7 +196,7 @@ function ua_parse_file_errors($file = '', $attachment_caption) {
 }
 
 function ua_get_upload_attachment_form($ua_attachment_caption = '', $ua_attachment_category = 0) {
-    $out = '<form action="" enctype="multipart/form-data" id="ua_upload_attachment_form" method="post">';
+    $out  = '<form action="" enctype="multipart/form-data" id="ua_upload_attachment_form" method="post">';
     $out .= wp_nonce_field('ua_upload_attachment_form', 'ua_upload_attachment_form');
     $out .= '<label for="ua_attachment_caption">' . __('Attachment Caption') . '</label><br />';
     $out .= '<input id="ua_attachment_caption" name="ua_attachment_caption" type="text" value="' . $ua_attachment_caption . '"/><br />';
@@ -278,8 +280,8 @@ function ua_init() {
     $default_attachment_cats = array(__('Uncategorized'));
 
     foreach ($default_attachment_cats as $cat) {
-        if (!term_exists($cat, 'attachment_category')) {
-            wp_insert_term($cat, 'attachment_category');
+        if (!term_exists($cat, 'ua_attachment_category')) {
+            wp_insert_term($cat, 'ua_attachment_category');
         }
     }
 }
