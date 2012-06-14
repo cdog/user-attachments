@@ -1,0 +1,4 @@
+#ua_upload_attachment_form input,
+#ua_upload_attachment_form select {
+    display: block;
+}

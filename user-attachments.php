@@ -26,6 +26,7 @@ this program; if not, write to the Free Software Foundation, Inc., 51 Franklin
 St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+define('UA_PLUGIN_URL', plugin_dir_url( __FILE__ ));
 define('MAX_UPLOAD_SIZE', 2097152);
 define('TYPE_WHITELIST', serialize(array(
     'application/pdf'
@@ -120,7 +121,8 @@ function ua_get_user_attachments_table($user_id) {
         return 0;
     }
 
-    $out  = '<p>' . __('Pending attachments') . '</p>';
+    $out  = '<hr />';
+    $out .= '<p>' . __('Pending attachments') . '</p>';
     $out .= '<form action="" method="post">';
     $out .= wp_nonce_field('ua_form_delete', 'ua_form_delete');
     $out .= '<table id="user_attachments">';
@@ -235,6 +237,9 @@ function ua_get_attachment_categories_dropdown($taxonomy, $selected) {
 add_action('init', 'ua_init');
 
 function ua_init() {
+    wp_register_style('user_attachments.css', UA_PLUGIN_URL . 'user-attachments.css');
+    wp_enqueue_style('user_attachments.css');
+
     $attachment_type_labels = array(
         'name'               => _x('Attachments', 'post type general name'),
         'singular_name'      => _x('Attachment', 'post type singular name'),
@@ -289,13 +294,13 @@ function ua_init() {
 
     register_taxonomy('ua_attachment_category', array('user_attachments'), $attachment_category_args);
 
-    $default_attachment_cats = array(__('Uncategorized'));
+    /*$default_attachment_cats = array(__('Uncategorized'));
 
     foreach ($default_attachment_cats as $cat) {
         if (!term_exists($cat, 'ua_attachment_category')) {
             wp_insert_term($cat, 'ua_attachment_category');
         }
-    }
+    }*/
 }
 
 ?>
