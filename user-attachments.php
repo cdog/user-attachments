@@ -149,7 +149,7 @@ function ua_get_user_attachments_table($user_id) {
         $out .= '<td>' . wp_get_attachment_link($post_attachment_id) . '</td>';
         $out .= '<td>' . $user_attachment->post_title . '</td>';
         $out .= '<td>' . $user_attachment_cat . '</td>';
-        $out .= '<td>' . get_the_author($user_attachment->ID) . '</td>';
+        $out .= '<td>' . get_the_author_meta('display_name', $user_id) . '</td>';
         $out .= '<td><input name="ua_attachment_delete_id[]" type="checkbox" value="' . $user_attachment->ID . '" /></td>';
         $out .= '</tr>';
     }
