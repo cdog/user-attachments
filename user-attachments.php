@@ -4,7 +4,7 @@
 Plugin Name: User Attachments
 Plugin URI: https://github.com/cdog/user-attachments
 Description: Allows registered users to submit and manage their attachments.
-Version: 1.0.0
+Version: 1.0.1
 Author: Cătălin Dogaru
 Author URI: http://swarm.cs.pub.ro/~cdogaru/
 License: GPLv2 or later
@@ -26,7 +26,7 @@ this program; if not, write to the Free Software Foundation, Inc., 51 Franklin
 St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-define('UA_PLUGIN_URL', plugin_dir_url( __FILE__ ));
+define('UA_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('MAX_UPLOAD_SIZE', 2097152);
 define('TYPE_WHITELIST', serialize(array(
     'application/pdf'
@@ -45,7 +45,7 @@ function ua_shortcode() {
         && wp_verify_nonce($_POST['ua_upload_attachment_form'], 'ua_upload_attachment_form')
     ) {
         $result = ua_parse_file_errors($_FILES['ua_attachment_file'], $_POST['ua_attachment_caption']);
-        
+
         if ($result['error']) {
             echo '<p>' . __('ERROR: ') . $result['error'] . '</p>';
         } else {
@@ -89,7 +89,7 @@ function ua_delete_user_attachments($attachments) {
         ) {
             $args = array(
                 'post_type'   => 'attachment',
-                'post_parent' => $user_attachment
+                'post_parent' => (int)$user_attachment
             );
 
             $attachments = get_posts($args);
@@ -100,7 +100,7 @@ function ua_delete_user_attachments($attachments) {
                 }
             }
 
-            wp_delete_post($user_attachment, true);
+            wp_delete_post((int)$user_attachment, true);
             $attachments_deleted++;
         }
     }
@@ -137,7 +137,7 @@ function ua_get_user_attachments_table($user_id) {
 
         $args = array(
             'post_type'   => 'attachment',
-            'post_parent' => $user_attachment
+            'post_parent' => $user_attachment->ID
         );
 
         $attachments = get_posts($args);
@@ -152,7 +152,7 @@ function ua_get_user_attachments_table($user_id) {
         $out .= '<td>' . $user_attachment->post_title . '</td>';
         $out .= '<td>' . $user_attachment_cat . '</td>';
         $out .= '<td>' . get_the_author_meta('display_name', $user_id) . '</td>';
-        $out .= '<td><input name="ua_attachment_delete_id[]" type="checkbox" value="' . $user_attachment->ID . '" /></td>';
+        $out .= '<td class="align_center"><input name="ua_attachment_delete_id[]" type="checkbox" value="' . $user_attachment->ID . '" /></td>';
         $out .= '</tr>';
     }
 

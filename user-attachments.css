@@ -1,4 +1,12 @@
+#ua_upload_attachment_form {
+    margin-bottom: 20px;
+}
+
 #ua_upload_attachment_form input,
 #ua_upload_attachment_form select {
     display: block;
+}
+
+#user_attachments .align_center {
+    text-align: center;
 }
