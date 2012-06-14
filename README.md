@@ -35,6 +35,7 @@ Changelog
 
 ### 1.0.1
 
+* Added some styling
 * Minor bug fixes
 
 ### 1.0.0

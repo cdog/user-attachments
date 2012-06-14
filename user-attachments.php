@@ -122,7 +122,7 @@ function ua_get_user_attachments_table($user_id) {
     }
 
     $out  = '<hr />';
-    $out .= '<p>' . __('Pending attachments') . '</p>';
+    $out .= '<h2>' . __('Pending attachments') . '</h2>';
     $out .= '<form action="" method="post">';
     $out .= wp_nonce_field('ua_form_delete', 'ua_form_delete');
     $out .= '<table id="user_attachments">';
