@@ -54,7 +54,7 @@ function ua_shortcode() {
                 'post_author' => $current_user->ID,
                 'post_type'   => 'user_attachments'
             );
-          
+
             if ($post_id = wp_insert_post($user_attachment_data)) {
                 ua_process_attachment('ua_attachment_file', $post_id, $result['caption']);
                 wp_set_object_terms($post_id, (int)$_POST['ua_attachment_category'], 'ua_attachment_category');
@@ -86,13 +86,20 @@ function ua_delete_user_attachments($attachments) {
         if (isset($_POST['ua_attachment_delete_id_' . $user_attachment])
             && wp_verify_nonce($_POST['ua_attachment_delete_id_' . $user_attachment], 'ua_attachment_delete_' . $user_attachment)
         ) {
-            //echo '<br /><b>' . $user_attachment . '<br />' . get_post_thumbnail_id($user_attachment) . '</b><br />';
+            $args = array(
+                'post_type'   => 'attachment',
+                'post_parent' => $user_attachment
+            );
 
-            if ($post_attachment_id = get_post_thumbnail_id($user_attachment)) {
-                wp_delete_attachment($post_attachment_id, true);
+            $attachments = get_posts($args);
+
+            if ($attachments) {
+                if ($post_attachment_id = $attachments[0]->ID) {
+                    wp_delete_attachment($post_attachment_id, true);
+                }
             }
 
-            wp_trash_post($user_attachment, true);
+            wp_delete_post($user_attachment, true);
             $attachments_deleted++;
         }
     }
@@ -107,9 +114,9 @@ function ua_get_user_attachments_table($user_id) {
         'post_status' => 'pending'
     );
 
-    $user_attachments = new WP_Query($args);
+    $user_attachments = get_posts($args);
 
-    if (!$user_attachments->post_count) {
+    if (!$user_attachments) {
         return 0;
     }
 
@@ -119,23 +126,27 @@ function ua_get_user_attachments_table($user_id) {
     $out .= '<table id="user_attachments">';
     $out .= '<thead><th>' . __('Attachment') . '</th><th>' . __('Caption') . '</th><th>' . __('Category') . '</th><th>' . __('Posted By') . '</th><th>' . __('Delete') . '</th></thead>';
 
-    foreach ($user_attachments->posts as $user_attachment) {
+    foreach ($user_attachments as $user_attachment) {
         $user_attachment_cats = get_the_terms($user_attachment->ID, 'ua_attachment_category');
 
         foreach ($user_attachment_cats as $cat) {
             $user_attachment_cat = $cat->name;
         }
 
-        echo '<br />' . $user_attachment->ID;
+        $args = array(
+            'post_type'   => 'attachment',
+            'post_parent' => $user_attachment
+        );
 
-        $post_attachment_id = get_post_thumbnail_id($user_attachment->ID);
+        $attachments = get_posts($args);
 
-        echo '<br />' . $post_attachment_id;
+        if ($attachments) {
+            $post_attachment_id = $attachments[0]->ID;
+        }
 
         $out .= wp_nonce_field('ua_attachment_delete_' . $user_attachment->ID, 'ua_attachment_delete_id_' . $user_attachment->ID, false);
         $out .= '<tr>';
-        $out .= '<td>' . wp_get_attachment_link($post_attachment_id, 'attachment') . '</td>';
-        echo '<br />' . wp_get_attachment_link($post_attachment_id, 'attachment');
+        $out .= '<td>' . wp_get_attachment_link($post_attachment_id) . '</td>';
         $out .= '<td>' . $user_attachment->post_title . '</td>';
         $out .= '<td>' . $user_attachment_cat . '</td>';
         $out .= '<td>' . get_the_author($user_attachment->ID) . '</td>';
@@ -151,6 +162,7 @@ function ua_get_user_attachments_table($user_id) {
 }
 
 function ua_process_attachment($file, $post_id, $caption) {
+    require_once(ABSPATH . "wp-admin" . '/includes/image.php');
     require_once(ABSPATH . 'wp-admin' . '/includes/file.php');
     require_once(ABSPATH . 'wp-admin' . '/includes/media.php');
 
