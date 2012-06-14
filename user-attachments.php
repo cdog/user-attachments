@@ -237,8 +237,10 @@ function ua_get_attachment_categories_dropdown($taxonomy, $selected) {
 add_action('init', 'ua_init');
 
 function ua_init() {
-    wp_register_style('user_attachments.css', UA_PLUGIN_URL . 'user-attachments.css');
-    wp_enqueue_style('user_attachments.css');
+    if (!is_admin()) {
+        wp_register_style('user-attachments.css', UA_PLUGIN_URL . 'user-attachments.css');
+        wp_enqueue_style('user-attachments.css');
+    }
 
     $attachment_type_labels = array(
         'name'               => _x('Attachments', 'post type general name'),
@@ -293,14 +295,6 @@ function ua_init() {
     );
 
     register_taxonomy('ua_attachment_category', array('user_attachments'), $attachment_category_args);
-
-    /*$default_attachment_cats = array(__('Uncategorized'));
-
-    foreach ($default_attachment_cats as $cat) {
-        if (!term_exists($cat, 'ua_attachment_category')) {
-            wp_insert_term($cat, 'ua_attachment_category');
-        }
-    }*/
 }
 
 ?>
