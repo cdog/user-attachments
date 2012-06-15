@@ -96,10 +96,10 @@ function ua_delete_user_attachments($attachments) {
                 'post_type'   => 'attachment'
             );
 
-            $attachments = get_posts($args);
+            $attachments = new WP_Query($args);
 
-            if ($attachments) {
-                if ($post_attachment_id = $attachments[0]->ID) {
+            if ($attachments->post_count) {
+                if ($post_attachment_id = $attachments->posts[0]->ID) {
                     wp_delete_attachment($post_attachment_id, true);
                 }
             }
@@ -119,9 +119,9 @@ function ua_get_user_attachments_table($user_id) {
         'post_type'   => 'user_attachments'
     );
 
-    $user_attachments = get_posts($args);
+    $user_attachments = new WP_Query($args);
 
-    if (!$user_attachments) {
+    if (!$user_attachments->post_count) {
         return 0;
     }
 
@@ -132,7 +132,7 @@ function ua_get_user_attachments_table($user_id) {
     $out .= '<table id="user_attachments">';
     $out .= '<thead><th>' . __('Attachment', 'ua_textdomain') . '</th><th>' . __('Caption', 'ua_textdomain') . '</th><th>' . __('Category', 'ua_textdomain') . '</th><th>' . __('Posted By', 'ua_textdomain') . '</th><th>' . __('Delete', 'ua_textdomain') . '</th></thead>';
 
-    foreach ($user_attachments as $user_attachment) {
+    foreach ($user_attachments->posts as $user_attachment) {
         $user_attachment_cats = get_the_terms($user_attachment->ID, 'ua_attachment_category');
 
         foreach ($user_attachment_cats as $cat) {
@@ -144,10 +144,10 @@ function ua_get_user_attachments_table($user_id) {
             'post_type'   => 'attachment'
         );
 
-        $attachments = get_posts($args);
+        $attachments = new WP_Query($args);
 
-        if ($attachments) {
-            $post_attachment_id = $attachments[0]->ID;
+        if ($attachments->post_count) {
+            $post_attachment_id = $attachments->posts[0]->ID;
         }
 
         $out .= wp_nonce_field('ua_attachment_delete_' . $user_attachment->ID, 'ua_attachment_delete_id_' . $user_attachment->ID, false);
