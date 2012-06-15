@@ -40,7 +40,7 @@ add_shortcode('user_attachments', 'ua_shortcode');
 
 function ua_shortcode() {
     if (!is_user_logged_in()) {
-        return '<p>' . __('You need to be logged in to submit an attachment.') . '</p>';
+        return '<p>' . __('You need to be logged in to submit an attachment.', 'ua_textdomain') . '</p>';
     }
 
     global $current_user;
@@ -51,7 +51,7 @@ function ua_shortcode() {
         $result = ua_parse_file_errors($_FILES['ua_attachment_file'], $_POST['ua_attachment_caption']);
 
         if ($result['error']) {
-            echo '<p>' . __('ERROR: ') . $result['error'] . '</p>';
+            echo '<p>' . __('ERROR: ', 'ua_textdomain') . $result['error'] . '</p>';
         } else {
             $user_attachment_data = array(
                 'post_title'  => $result['caption'],
@@ -72,7 +72,7 @@ function ua_shortcode() {
     ) {
         if (isset($_POST['ua_attachment_delete_id'])) {
             if ($user_attachments_deleted = ua_delete_user_attachments($_POST['ua_attachment_delete_id'])) {
-                echo '<p>' . $user_attachments_deleted . __(' attachment(s) deleted!') . '</p>';
+                echo '<p>' . $user_attachments_deleted . __(' attachment(s) deleted!', 'ua_textdomain') . '</p>';
             }
         }
     }
@@ -126,11 +126,11 @@ function ua_get_user_attachments_table($user_id) {
     }
 
     $out  = '<hr />';
-    $out .= '<h2>' . __('Pending attachments') . '</h2>';
+    $out .= '<h2>' . __('Pending attachments', 'ua_textdomain') . '</h2>';
     $out .= '<form action="" method="post">';
     $out .= wp_nonce_field('ua_form_delete', 'ua_form_delete');
     $out .= '<table id="user_attachments">';
-    $out .= '<thead><th>' . __('Attachment') . '</th><th>' . __('Caption') . '</th><th>' . __('Category') . '</th><th>' . __('Posted By') . '</th><th>' . __('Delete') . '</th></thead>';
+    $out .= '<thead><th>' . __('Attachment', 'ua_textdomain') . '</th><th>' . __('Caption', 'ua_textdomain') . '</th><th>' . __('Category', 'ua_textdomain') . '</th><th>' . __('Posted By', 'ua_textdomain') . '</th><th>' . __('Delete', 'ua_textdomain') . '</th></thead>';
 
     foreach ($user_attachments as $user_attachment) {
         $user_attachment_cats = get_the_terms($user_attachment->ID, 'ua_attachment_category');
@@ -161,16 +161,16 @@ function ua_get_user_attachments_table($user_id) {
     }
 
     $out .= '</table>';
-    $out .= '<input name="ua_delete" type="submit" value="' . __('Delete Selected Attachments') . '" />';
-    $out .= '</form>';  
+    $out .= '<input name="ua_delete" type="submit" value="' . __('Delete Selected Attachments', 'ua_textdomain') . '" />';
+    $out .= '</form>';
 
     return $out;
 }
 
 function ua_process_attachment($file, $post_id, $caption) {
-    require_once(ABSPATH . "wp-admin" . '/includes/image.php');
-    require_once(ABSPATH . 'wp-admin' . '/includes/file.php');
-    require_once(ABSPATH . 'wp-admin' . '/includes/media.php');
+    require_once ABSPATH . "wp-admin" . '/includes/image.php';
+    require_once ABSPATH . 'wp-admin' . '/includes/file.php';
+    require_once ABSPATH . 'wp-admin' . '/includes/media.php';
 
     $attachment_id = media_handle_upload($file, $post_id);
 
@@ -189,7 +189,7 @@ function ua_parse_file_errors($file = '', $attachment_caption) {
     $result['error'] = 0;
 
     if ($file['error']) {
-        $result['error'] = __('Error uploading file!');
+        $result['error'] = __('Error uploading file!', 'ua_textdomain');
 
         return $result;
     }
@@ -197,7 +197,7 @@ function ua_parse_file_errors($file = '', $attachment_caption) {
     $attachment_caption = sanitize_text_field($attachment_caption);
 
     if($attachment_caption == '') {
-        $result['error'] = __('Invalid attachment caption!');
+        $result['error'] = __('Invalid attachment caption!', 'ua_textdomain');
 
         return $result;
     }
@@ -205,9 +205,9 @@ function ua_parse_file_errors($file = '', $attachment_caption) {
     $result['caption'] = $attachment_caption;
 
     if (!in_array($file['type'], unserialize(TYPE_WHITELIST))) {
-        $result['error'] = __('File type not allowed!');
+        $result['error'] = __('File type not allowed!', 'ua_textdomain');
     } elseif (($file['size'] > MAX_UPLOAD_SIZE)) {
-        $result['error'] = __('File size too large!');
+        $result['error'] = __('File size too large!', 'ua_textdomain');
     }
 
     return $result;
@@ -216,25 +216,26 @@ function ua_parse_file_errors($file = '', $attachment_caption) {
 function ua_get_upload_attachment_form($ua_attachment_caption = '', $ua_attachment_category = 0) {
     $out  = '<form action="" enctype="multipart/form-data" id="ua_upload_attachment_form" method="post">';
     $out .= wp_nonce_field('ua_upload_attachment_form', 'ua_upload_attachment_form');
-    $out .= '<label for="ua_attachment_caption">' . __('Attachment Caption') . '</label><br />';
+    $out .= '<label for="ua_attachment_caption">' . __('Attachment Caption', 'ua_textdomain') . '</label><br />';
     $out .= '<input id="ua_attachment_caption" name="ua_attachment_caption" type="text" value="' . $ua_attachment_caption . '"/><br />';
-    $out .= '<label for="ua_attachment_category">' . __('Attachment Category') . '</label><br />';
+    $out .= '<label for="ua_attachment_category">' . __('Attachment Category', 'ua_textdomain') . '</label><br />';
     $out .= ua_get_attachment_categories_dropdown('ua_attachment_category', $ua_attachment_category) . '<br />';
-    $out .= '<label for="ua_attachment_file">' . __('Select Your Attachment') . '</label><br />';
+    $out .= '<label for="ua_attachment_file">' . __('Select Your Attachment', 'ua_textdomain') . '</label><br />';
     $out .= '<input id="ua_attachment_file" name="ua_attachment_file" type="file"><br />';
-    $out .= '<input id="ua_submit" name="ua_submit" type="submit" value="' . __('Upload Attachment') . '">';
+    $out .= '<input id="ua_submit" name="ua_submit" type="submit" value="' . __('Upload Attachment', 'ua_textdomain') . '">';
     $out .= '</form>';
 
     return $out;
 }
 
 function ua_get_attachment_categories_dropdown($taxonomy, $selected) {
+    // Build the exclude array
     $exclude = array();
-    $ua_options = get_option('ua_options');
+    $ua_options = get_option('ua_settings');
 
-    foreach ($ua_options['ua_exclude_categories'] as $key => $value) {
+    foreach ($ua_options['ua_exclude_categories'] as $id => $value) {
         if ($value == 'true') {
-            $exclude[] = $key;
+            $exclude[] = $id;
         }
     }
 
@@ -252,17 +253,17 @@ add_action('init', 'ua_init');
 
 function ua_init() {
     $attachment_type_labels = array(
-        'name'               => _x('Attachments', 'post type general name'),
-        'singular_name'      => _x('Attachment', 'post type singular name'),
-        'add_new'            => _x('Add New', 'attachment'),
-        'add_new_item'       => __('Add New'),
-        'edit_item'          => __('Edit'),
-        'new_item'           => __('Add New'),
-        'all_items'          => __('All Attachments'),
-        'view_item'          => __('View'),
-        'search_items'       => __('Search Attachments'),
-        'not_found'          => __('No Attachments found'),
-        'not_found_in_trash' => __('No Attachments found in Trash'),
+        'name'               => _x('Attachments', 'post type general name', 'ua_textdomain'),
+        'singular_name'      => _x('Attachment', 'post type singular name', 'ua_textdomain'),
+        'add_new'            => _x('Add New', 'attachment', 'ua_textdomain'),
+        'add_new_item'       => __('Add New', 'ua_textdomain'),
+        'edit_item'          => __('Edit', 'ua_textdomain'),
+        'new_item'           => __('Add New', 'ua_textdomain'),
+        'all_items'          => __('All Attachments', 'ua_textdomain'),
+        'view_item'          => __('View'), 'ua_textdomain',
+        'search_items'       => __('Search Attachments', 'ua_textdomain'),
+        'not_found'          => __('No Attachments found', 'ua_textdomain'),
+        'not_found_in_trash' => __('No Attachments found in Trash', 'ua_textdomain'),
         'parent_item_colon'  => '',
         'menu_name'          => 'Attachments'
     );
@@ -282,17 +283,17 @@ function ua_init() {
     register_post_type('user_attachments', $attachment_type_args);
 
     $attachment_category_labels = array(
-        'name'              => _x('Categories', 'taxonomy general name'),
-        'singular_name'     => _x('Attachment', 'taxonomy singular name'),
-        'search_items'      => __('Search Categories'),
-        'all_items'         => __('All Categories'),
-        'parent_item'       => __('Parent Category'),
-        'parent_item_colon' => __('Parent Category:'),
-        'edit_item'         => __('Edit Category'),
-        'update_item'       => __('Update Category'),
-        'add_new_item'      => __('Add New Category'),
-        'new_item_name'     => __('New Attachment Name'),
-        'menu_name'         => __('Categories')
+        'name'              => _x('Categories', 'taxonomy general name', 'ua_textdomain'),
+        'singular_name'     => _x('Attachment', 'taxonomy singular name', 'ua_textdomain'),
+        'search_items'      => __('Search Categories', 'ua_textdomain'),
+        'all_items'         => __('All Categories', 'ua_textdomain'),
+        'parent_item'       => __('Parent Category', 'ua_textdomain'),
+        'parent_item_colon' => __('Parent Category:', 'ua_textdomain'),
+        'edit_item'         => __('Edit Category', 'ua_textdomain'),
+        'update_item'       => __('Update Category', 'ua_textdomain'),
+        'add_new_item'      => __('Add New Category', 'ua_textdomain'),
+        'new_item_name'     => __('New Attachment Name', 'ua_textdomain'),
+        'menu_name'         => __('Categories', 'ua_textdomain')
     );
 
     $attachment_category_args = array(
