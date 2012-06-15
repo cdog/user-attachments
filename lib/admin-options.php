@@ -83,11 +83,30 @@ function ua_create_settings_field($args = array()) {
 }
 
 /**
+ * Initializes the settings to their default values
+ *
+ * @param string $option The option to update
+ */
+function ua_initialize_settings($option) {
+    $default_settings = array();
+
+    foreach ($this->settings as $id => $setting ) {
+        $default_settings[$id] = $setting['std'];
+    }
+
+    update_option($option, $default_settings);
+}
+
+/**
  * Registers the setting, settings sections and settings fields
  *
  * Source: http://alisothegeek.com/2011/01/wordpress-settings-api-tutorial-1/
  */
 function ua_register_settings() {
+    // Initialize settings
+    if (!get_option('ua_settings'))
+        ua_initialize_settings('ua_settings');
+
     // Get the settings sections array
     $settings_sections = ua_get_settings();
     $ua_option_name  = $settings_sections['ua_option_name'];

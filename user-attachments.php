@@ -29,12 +29,12 @@ St, Fifth Floor, Boston, MA  02110-1301  USA
 /**
  * Constants
  */
-define('UA_PLUGIN_URL', plugin_dir_url(__FILE__));
-define('UA_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('MAX_UPLOAD_SIZE', 2097152);
-define('TYPE_WHITELIST', serialize(array(
+define('TYPE_WHITELIST',  serialize(array(
     'application/pdf'
 )));
+define('UA_PLUGIN_PATH',  plugin_dir_path(__FILE__));
+define('UA_PLUGIN_URL',   plugin_dir_url(__FILE__));
 
 add_shortcode('user_attachments', 'ua_shortcode');
 
@@ -54,9 +54,9 @@ function ua_shortcode() {
             echo '<p>' . __('ERROR: ', 'ua_textdomain') . $result['error'] . '</p>';
         } else {
             $user_attachment_data = array(
-                'post_title'  => $result['caption'],
-                'post_status' => 'pending',
                 'post_author' => $current_user->ID,
+                'post_status' => 'pending',
+                'post_title'  => $result['caption'],
                 'post_type'   => 'user_attachments'
             );
 
@@ -92,8 +92,8 @@ function ua_delete_user_attachments($attachments) {
             && wp_verify_nonce($_POST['ua_attachment_delete_id_' . $user_attachment], 'ua_attachment_delete_' . $user_attachment)
         ) {
             $args = array(
-                'post_type'   => 'attachment',
-                'post_parent' => (int)$user_attachment
+                'post_parent' => (int)$user_attachment,
+                'post_type'   => 'attachment'
             );
 
             $attachments = get_posts($args);
@@ -115,8 +115,8 @@ function ua_delete_user_attachments($attachments) {
 function ua_get_user_attachments_table($user_id) {
     $args = array(
         'author'      => $user_id,
-        'post_type'   => 'user_attachments',
-        'post_status' => 'pending'
+        'post_status' => 'pending',
+        'post_type'   => 'user_attachments'
     );
 
     $user_attachments = get_posts($args);
@@ -140,8 +140,8 @@ function ua_get_user_attachments_table($user_id) {
         }
 
         $args = array(
-            'post_type'   => 'attachment',
-            'post_parent' => $user_attachment->ID
+            'post_parent' => $user_attachment->ID,
+            'post_type'   => 'attachment'
         );
 
         $attachments = get_posts($args);
@@ -230,7 +230,7 @@ function ua_get_upload_attachment_form($ua_attachment_caption = '', $ua_attachme
 
 function ua_get_attachment_categories_dropdown($taxonomy, $selected) {
     // Build the exclude array
-    $exclude = array();
+    $exclude    = array();
     $ua_options = get_option('ua_settings');
 
     foreach ($ua_options['ua_exclude_categories'] as $id => $value) {
@@ -240,12 +240,12 @@ function ua_get_attachment_categories_dropdown($taxonomy, $selected) {
     }
 
     return wp_dropdown_categories(array(
-        'taxonomy'   => $taxonomy,
+        'echo'       => 0,
+        'exclude'    => $exclude,
+        'hide_empty' => 0,
         'name'       => 'ua_attachment_category',
         'selected'   => $selected,
-        'hide_empty' => 0,
-        'echo'       => 0,
-        'exclude'    => $exclude
+        'taxonomy'   => $taxonomy
     ));
 }
 
@@ -253,55 +253,55 @@ add_action('init', 'ua_init');
 
 function ua_init() {
     $attachment_type_labels = array(
-        'name'               => _x('Attachments', 'post type general name', 'ua_textdomain'),
-        'singular_name'      => _x('Attachment', 'post type singular name', 'ua_textdomain'),
         'add_new'            => _x('Add New', 'attachment', 'ua_textdomain'),
         'add_new_item'       => __('Add New', 'ua_textdomain'),
-        'edit_item'          => __('Edit', 'ua_textdomain'),
-        'new_item'           => __('Add New', 'ua_textdomain'),
         'all_items'          => __('All Attachments', 'ua_textdomain'),
-        'view_item'          => __('View'), 'ua_textdomain',
-        'search_items'       => __('Search Attachments', 'ua_textdomain'),
+        'edit_item'          => __('Edit', 'ua_textdomain'),
+        'menu_name'          => 'Attachments',
+        'name'               => _x('Attachments', 'post type general name', 'ua_textdomain'),
+        'new_item'           => __('Add New', 'ua_textdomain'),
         'not_found'          => __('No Attachments found', 'ua_textdomain'),
         'not_found_in_trash' => __('No Attachments found in Trash', 'ua_textdomain'),
         'parent_item_colon'  => '',
-        'menu_name'          => 'Attachments'
+        'search_items'       => __('Search Attachments', 'ua_textdomain'),
+        'singular_name'      => _x('Attachment', 'post type singular name', 'ua_textdomain'),
+        'view_item'          => __('View'), 'ua_textdomain'
     );
 
     $attachment_type_args = array(
-        'labels'          => $attachment_type_labels,
-        'public'          => true,
-        'query_var'       => true,
-        'rewrite'         => true,
         'capability_type' => 'post',
         'has_archive'     => true,
         'hierarchical'    => false,
+        'labels'          => $attachment_type_labels,
         'menu_position'   => null,
+        'public'          => true,
+        'query_var'       => true,
+        'rewrite'         => true,
         'supports'        => array('title', 'editor', 'author')
     );
 
     register_post_type('user_attachments', $attachment_type_args);
 
     $attachment_category_labels = array(
-        'name'              => _x('Categories', 'taxonomy general name', 'ua_textdomain'),
-        'singular_name'     => _x('Attachment', 'taxonomy singular name', 'ua_textdomain'),
-        'search_items'      => __('Search Categories', 'ua_textdomain'),
+        'add_new_item'      => __('Add New Category', 'ua_textdomain'),
         'all_items'         => __('All Categories', 'ua_textdomain'),
+        'edit_item'         => __('Edit Category', 'ua_textdomain'),
+        'menu_name'         => __('Categories', 'ua_textdomain'),
+        'name'              => _x('Categories', 'taxonomy general name', 'ua_textdomain'),
+        'new_item_name'     => __('New Attachment Name', 'ua_textdomain'),
         'parent_item'       => __('Parent Category', 'ua_textdomain'),
         'parent_item_colon' => __('Parent Category:', 'ua_textdomain'),
-        'edit_item'         => __('Edit Category', 'ua_textdomain'),
-        'update_item'       => __('Update Category', 'ua_textdomain'),
-        'add_new_item'      => __('Add New Category', 'ua_textdomain'),
-        'new_item_name'     => __('New Attachment Name', 'ua_textdomain'),
-        'menu_name'         => __('Categories', 'ua_textdomain')
+        'search_items'      => __('Search Categories', 'ua_textdomain'),
+        'singular_name'     => _x('Attachment', 'taxonomy singular name', 'ua_textdomain'),
+        'update_item'       => __('Update Category', 'ua_textdomain')
     );
 
     $attachment_category_args = array(
         'hierarchical' => true,
         'labels'       => $attachment_category_labels,
-        'show_ui'      => true,
         'query_var'    => true,
-        'rewrite'      => array('slug' => 'user_attachment_category')
+        'rewrite'      => array('slug' => 'user_attachment_category'),
+        'show_ui'      => true
     );
 
     register_taxonomy('ua_attachment_category', array('user_attachments'), $attachment_category_args);
