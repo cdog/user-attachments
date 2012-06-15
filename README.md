@@ -35,7 +35,7 @@ Changelog
 
 ### 1.0.2
 
-* Added an admin page for settings
+* Added a settings admin page
 
 ### 1.0.1
 
