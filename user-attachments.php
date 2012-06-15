@@ -4,7 +4,7 @@
 Plugin Name: User Attachments
 Plugin URI: https://github.com/cdog/user-attachments
 Description: Allows registered users to submit and manage their attachments.
-Version: 1.0.1
+Version: 1.0.2
 Author: Cătălin Dogaru
 Author URI: http://swarm.cs.pub.ro/~cdogaru/
 License: GPLv2 or later
@@ -26,7 +26,11 @@ this program; if not, write to the Free Software Foundation, Inc., 51 Franklin
 St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+/**
+ * Define Constants
+ */
 define('UA_PLUGIN_URL', plugin_dir_url(__FILE__));
+define('UA_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('MAX_UPLOAD_SIZE', 2097152);
 define('TYPE_WHITELIST', serialize(array(
     'application/pdf'
@@ -237,11 +241,6 @@ function ua_get_attachment_categories_dropdown($taxonomy, $selected) {
 add_action('init', 'ua_init');
 
 function ua_init() {
-    if (!is_admin()) {
-        wp_register_style('user-attachments.css', UA_PLUGIN_URL . 'user-attachments.css');
-        wp_enqueue_style('user-attachments.css');
-    }
-
     $attachment_type_labels = array(
         'name'               => _x('Attachments', 'post type general name'),
         'singular_name'      => _x('Attachment', 'post type singular name'),
@@ -295,6 +294,13 @@ function ua_init() {
     );
 
     register_taxonomy('ua_attachment_category', array('user_attachments'), $attachment_category_args);
+
+    if (is_admin()) {
+        require_once UA_PLUGIN_PATH . 'lib/admin-options.php';
+    } else {
+        wp_register_style('user-attachments.css', UA_PLUGIN_URL . 'user-attachments.css');
+        wp_enqueue_style('user-attachments.css');
+    }
 }
 
 ?>

@@ -5,7 +5,7 @@ Contributors: cdog
 Tags: attachments, upload  
 Requires at least: 3.0  
 Tested up to: 3.3.2  
-Stable tag: 1.0.1  
+Stable tag: 1.0.2  
 License: GPLv2 or later
 
 Allows registered users to submit and manage their attachments.
@@ -33,6 +33,10 @@ Upload the User Attachments plugin to your blog, Activate it, then insert the [u
 Changelog
 ---------
 
+### 1.0.2
+
+* Added an admin page for settings
+
 ### 1.0.1
 
 * Added some styling
@@ -40,5 +44,5 @@ Changelog
 
 ### 1.0.0
 
-* Specify the license is GPL v2 or later
+* Specified the license to GPLv2 or later
 * Initial release
