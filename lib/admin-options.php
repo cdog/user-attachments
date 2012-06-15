@@ -55,14 +55,14 @@ function ua_get_settings() {
 function ua_create_settings_field($args = array()) {
     // Default settings
     $defaults = array(
-        'id'      => 'default_field',
-        'title'   => 'Default Field',
-        'desc'    => 'Default description.',
-        'std'     => '',
-        'type'    => 'text',
-        'section' => 'main_section',
         'choices' => array(),
-        'class'   => ''
+        'class'   => '',
+        'desc'    => 'Default description.',
+        'id'      => 'default_field',
+        'section' => 'main_section',
+        'std'     => '',
+        'title'   => 'Default Field',
+        'type'    => 'text'
     );
     
     // Import variables into the current symbol table
@@ -70,31 +70,25 @@ function ua_create_settings_field($args = array()) {
     
     // Additional arguments for the form field output
     $field_args = array(
-        'type'      => $type,
-        'id'        => $id,
-        'desc'      => $desc,
-        'std'       => $std,
         'choices'   => $choices,
+        'class'     => $class,
+        'desc'      => $desc,
+        'id'        => $id,
         'label_for' => $id,
-        'class'     => $class
+        'std'       => $std,
+        'type'      => $type
     );
 
     add_settings_field($id, $title, 'ua_form_field_fn', __FILE__, $section, $field_args);
 }
 
 /**
- * Initializes the settings to their default values
- *
- * @param string $option The option to update
+ * Initializes the options to their default values
  */
 function ua_initialize_settings($option) {
-    $default_settings = array();
+    $default_settings = ua_options_page_fields();
 
-    foreach ($this->settings as $id => $setting ) {
-        $default_settings[$id] = $setting['std'];
-    }
-
-    update_option($option, $default_settings);
+    update_option('ua_settings', $default_settings);
 }
 
 /**
@@ -105,7 +99,7 @@ function ua_initialize_settings($option) {
 function ua_register_settings() {
     // Initialize settings
     if (!get_option('ua_settings'))
-        ua_initialize_settings('ua_settings');
+        ua_initialize_settings();
 
     // Get the settings sections array
     $settings_sections = ua_get_settings();

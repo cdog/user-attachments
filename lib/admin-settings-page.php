@@ -20,9 +20,9 @@ function ua_options_page_sections() {
 function ua_options_page_fields() {
     // Get the categories
     $args = array(
-        'taxonomy'   => 'ua_attachment_category',
+        'hide_empty' => 0,
         'name'       => 'ua_attachment_category',
-        'hide_empty' => 0
+        'taxonomy'   => 'ua_attachment_category'
     );
 
     $categories = get_categories($args);
@@ -37,13 +37,13 @@ function ua_options_page_fields() {
     }
 
     $options[] = array(
-        'section' => 'categories_section',
-        'id'      => 'ua_exclude_categories',
-        'title'   => __('Exclude Categories', 'ua_textdomain'),
+        'choices' => $choices,
         'desc'    => __('Select the categories you want to exclude from the upload form.', 'ua_textdomain'),
-        'type'    => 'multi_checkbox',
+        'id'      => 'ua_exclude_categories',
+        'section' => 'categories_section',
         'std'     => '',
-        'choices' => $choices
+        'title'   => __('Exclude Categories', 'ua_textdomain'),
+        'type'    => 'multi_checkbox'
     );
 
     return $options;
