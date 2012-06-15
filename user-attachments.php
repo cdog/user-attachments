@@ -229,12 +229,22 @@ function ua_get_upload_attachment_form($ua_attachment_caption = '', $ua_attachme
 }
 
 function ua_get_attachment_categories_dropdown($taxonomy, $selected) {
+    $exclude = array();
+    $ua_options = get_option('ua_options');
+
+    foreach ($ua_options['ua_exclude_categories'] as $key => $value) {
+        if ($value == 'true') {
+            $exclude[] = $key;
+        }
+    }
+
     return wp_dropdown_categories(array(
         'taxonomy'   => $taxonomy,
         'name'       => 'ua_attachment_category',
         'selected'   => $selected,
         'hide_empty' => 0,
-        'echo'       => 0
+        'echo'       => 0,
+        'exclude'    => $exclude
     ));
 }
 

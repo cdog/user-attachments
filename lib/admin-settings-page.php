@@ -7,7 +7,7 @@
  */
 function ua_options_page_sections() {
     $sections = array();
-    $sections['checkbox_section'] = __('Categories', 'ua_textdomain');
+    $sections['categories_section'] = __('Categories', 'ua_textdomain');
 
     return $sections;
 }
@@ -18,19 +18,30 @@ function ua_options_page_sections() {
  * @return array
  */
 function ua_options_page_fields() {
+    $args = array(
+        'taxonomy'   => 'ua_attachment_category',
+        'name'       => 'ua_attachment_category',
+        'hide_empty' => 0
+    );
+
+
+    $choices = array();
+    $categories = get_categories($args);
+
+    if ($categories) {
+        foreach ($categories as $cat) {
+            $choices[] = $cat->cat_name . '|' . $cat->cat_ID;
+        }
+    }
+
     $options[] = array(
-        'section' => 'checkbox_section',
-        'id'      => 'ua_multicheckbox_inputs',
+        'section' => 'categories_section',
+        'id'      => 'ua_exclude_categories',
         'title'   => __('Exclude Categories', 'ua_textdomain'),
         'desc'    => __('Selected categories are excluded from the upload form', 'ua_textdomain'),
-        'type'    => 'multi-checkbox',
+        'type'    => 'multi_checkbox',
         'std'     => '',
-        'choices' => array(
-            __('Category 1','ua_textdomain') . '|cat1',
-            __('Category 2','ua_textdomain') . '|cat2',
-            __('Category 3','ua_textdomain') . '|cat3',
-            __('Category 4','ua_textdomain') . '|cat4'
-        )
+        'choices' => $choices
     );
 
     return $options;

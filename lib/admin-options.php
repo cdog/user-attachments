@@ -60,14 +60,14 @@ return $output;
 function ua_create_settings_field( $args = array() ) {
 	// default array to overwrite when calling the function
 	$defaults = array(
-		'id'      => 'default_field', 					// the ID of the setting in our options array, and the ID of the HTML form element
-		'title'   => 'Default Field', 					// the label for the HTML form element
-		'desc'    => 'This is a default description.', 	// the description displayed under the HTML form element
-		'std'     => '', 								// the default value for this setting
-		'type'    => 'text', 							// the HTML form element to use
-		'section' => 'main_section', 					// the section this setting belongs to — must match the array key of a section in ua_options_page_sections()
-		'choices' => array(), 							// (optional): the values in radio buttons or a drop-down menu
-		'class'   => '' 								// the HTML form element class. Is used for validation purposes and may be also use for styling if needed.
+		'id'      => 'default_field',
+		'title'   => 'Default Field',
+		'desc'    => 'Default description.',
+		'std'     => '',
+		'type'    => 'text',
+		'section' => 'main_section',
+		'choices' => array(),
+		'class'   => ''
 	);
 	
 	// "extract" to be able to use the array keys as variables in our function output below
@@ -158,7 +158,7 @@ function ua_form_field_fn($args = array()) {
 	// switch html display based on the setting type.	
 	switch ( $type ) {
 		
-		case "multi-checkbox":
+		case "multi_checkbox":
 			foreach($choices as $item) {
 				
 				$item = explode("|",$item);
@@ -232,7 +232,7 @@ function ua_validate_options($input) {
 		
 			switch ( $option['type'] ) {
 				
-				case 'multi-checkbox':
+				case 'multi_checkbox':
 					unset($checkboxarray);
 					$check_values = array();
 					foreach ($option['choices'] as $k => $v ) {

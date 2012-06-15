@@ -32,8 +32,10 @@ function ua_get_admin_page() {
 function ua_settings_page_header() {
     $settings_output = ua_get_settings();
 
-    // Display the screen icon and page title
+    // Display the screen icon
     screen_icon('options-general');
+
+    // And the page title
     echo '<h2>' . $settings_output['ua_page_title'] . '</h2>';
 }
 
