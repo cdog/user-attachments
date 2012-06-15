@@ -27,7 +27,7 @@ St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 /**
- * Define Constants
+ * Constants
  */
 define('UA_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('UA_PLUGIN_PATH', plugin_dir_path(__FILE__));

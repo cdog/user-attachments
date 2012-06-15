@@ -1,9 +1,9 @@
 <?php
+
 /**
- * Define Constants
+ * Constants
  */
-define('UA_SHORTNAME', 'ua'); 
-define('UA_PAGE_BASENAME', 'ua_settings'); 
+define('UA_PAGE_BASENAME', 'ua_settings');
 
 /**
  * Specify Hooks/Filters

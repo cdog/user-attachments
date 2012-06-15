@@ -12,7 +12,7 @@ function ua_get_admin_page() {
     if ($pagenow == 'options.php') {
         $parts = explode('page=', $_POST['_wp_http_referer']);
         $page  = $parts[1]; 
-		$pos   = strpos($page,"&");
+        $pos   = strpos($page, '&');
 
         if ($pos !== FALSE) {
             $page = substr($parts[1], 0, $pos);
