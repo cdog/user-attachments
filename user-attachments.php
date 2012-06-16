@@ -156,6 +156,8 @@ function ua_manage() {
 
     $args = array(
         'numberposts' => -1,
+        'order'       => 'ASC',
+        'orderby'     => 'display_name',
         'post_status' => 'pending, publish',
         'post_type'   => 'user_attachments'
     );
@@ -205,7 +207,7 @@ function ua_manage() {
         echo '<tr>';
         echo '<td>' . wp_get_attachment_link($post_attachment_id) . '</td>';
         echo '<td>' . $user_attachment->post_title . '</td>';
-        echo '<td>' . get_the_author_meta('display_name', $user_id) . '</td>';
+        echo '<td>' . get_the_author_meta('display_name', $user_attachment->post_author) . '</td>';
         echo '<td class="align_center"><input name="ua_attachment_delete_id[]" type="checkbox" value="' . $user_attachment->ID . '" /></td>';
         echo '</tr>';
     }
