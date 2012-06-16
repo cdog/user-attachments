@@ -97,13 +97,13 @@ function ua_initialize_settings() {
  * Source: http://alisothegeek.com/2011/01/wordpress-settings-api-tutorial-1/
  */
 function ua_register_settings() {
+    // Initialize settings
+    if (!get_option('ua_settings'))
+        ua_initialize_settings();
+
     // Get the settings sections array
     $settings_sections = ua_get_settings();
     $ua_option_name  = $settings_sections['ua_option_name'];
-
-    // Initialize settings
-    if (!get_option($ua_option_name))
-        ua_initialize_settings();
 
     // Register the setting and its sanitization callback
     register_setting($ua_option_name, $ua_option_name, 'ua_validate_options');

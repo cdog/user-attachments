@@ -239,6 +239,27 @@ function ua_parse_file_errors($file = '', $attachment_caption) {
 }
 
 function ua_get_upload_attachment_form($ua_attachment_caption = '', $ua_attachment_category = 0) {
+    // Build the exclude array
+    $exclude    = array();
+    $ua_options = get_option('ua_settings');
+
+    foreach ($ua_options['ua_exclude_categories'] as $id => $value) {
+        if ($value == 'true') {
+            $exclude[] = $id;
+        }
+    }
+
+    $categories = get_categories(array(
+        'echo'       => 0,
+        'exclude'    => $exclude,
+        'hide_empty' => 0,
+        'taxonomy'   => 'ua_attachment_category'
+    ));
+
+    if (!$categories) {
+        return '<p>' . __('The upload form is currently disabled (no upload categoires are available).') . '</p>';
+    }
+
     $out  = '<form action="" enctype="multipart/form-data" id="ua_upload_attachment_form" method="post">';
     $out .= wp_nonce_field('ua_upload_attachment_form', 'ua_upload_attachment_form');
     $out .= '<label for="ua_attachment_caption">' . __('Attachment Caption', 'ua_textdomain') . '</label><br />';
