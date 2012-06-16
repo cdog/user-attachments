@@ -92,14 +92,15 @@ function ua_delete_user_attachments($attachments) {
             && wp_verify_nonce($_POST['ua_attachment_delete_id_' . $user_attachment], 'ua_attachment_delete_' . $user_attachment)
         ) {
             $args = array(
+                'numberposts' => -1,
                 'post_parent' => (int)$user_attachment,
                 'post_type'   => 'attachment'
             );
 
-            $attachments = new WP_Query($args);
+            $attachments = get_posts($args);
 
-            if ($attachments->post_count) {
-                if ($post_attachment_id = $attachments->posts[0]->ID) {
+            if ($attachments) {
+                if ($post_attachment_id = $attachments[0]->ID) {
                     wp_delete_attachment($post_attachment_id, true);
                 }
             }
@@ -113,15 +114,38 @@ function ua_delete_user_attachments($attachments) {
 }
 
 function ua_get_user_attachments_table($user_id) {
+    // Build the exclude array
+    $exclude    = array();
+    $ua_options = get_option('ua_settings');
+
+    foreach ($ua_options['ua_exclude_categories'] as $id => $value) {
+        if ($value == 'true') {
+            $exclude[] = $id;
+        }
+    }
+
     $args = array(
         'author'      => $user_id,
+        'numberposts' => -1,
         'post_status' => 'pending',
         'post_type'   => 'user_attachments'
     );
 
-    $user_attachments = new WP_Query($args);
+    $user_attachments = get_posts($args);
 
-    if (!$user_attachments->post_count) {
+    foreach ($user_attachments as $key => $user_attachment) {
+        $user_attachment_cats = get_the_terms($user_attachment->ID, 'ua_attachment_category');
+
+        foreach ($user_attachment_cats as $cat) {
+            $user_attachment_cat = $cat->term_id;
+        }
+
+        if (in_array($user_attachment_cat, $exclude)) {
+            unset($user_attachments[$key]);
+        }
+    }
+
+    if (!$user_attachments) {
         return 0;
     }
 
@@ -132,7 +156,7 @@ function ua_get_user_attachments_table($user_id) {
     $out .= '<table id="user_attachments">';
     $out .= '<thead><th>' . __('Attachment', 'ua_textdomain') . '</th><th>' . __('Caption', 'ua_textdomain') . '</th><th>' . __('Category', 'ua_textdomain') . '</th><th>' . __('Posted By', 'ua_textdomain') . '</th><th>' . __('Delete', 'ua_textdomain') . '</th></thead>';
 
-    foreach ($user_attachments->posts as $user_attachment) {
+    foreach ($user_attachments as $user_attachment) {
         $user_attachment_cats = get_the_terms($user_attachment->ID, 'ua_attachment_category');
 
         foreach ($user_attachment_cats as $cat) {
@@ -140,14 +164,15 @@ function ua_get_user_attachments_table($user_id) {
         }
 
         $args = array(
+            'numberposts' => -1,
             'post_parent' => $user_attachment->ID,
             'post_type'   => 'attachment'
         );
 
-        $attachments = new WP_Query($args);
+        $attachments = get_posts($args);
 
-        if ($attachments->post_count) {
-            $post_attachment_id = $attachments->posts[0]->ID;
+        if ($attachments) {
+            $post_attachment_id = $attachments[0]->ID;
         }
 
         $out .= wp_nonce_field('ua_attachment_delete_' . $user_attachment->ID, 'ua_attachment_delete_id_' . $user_attachment->ID, false);

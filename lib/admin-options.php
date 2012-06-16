@@ -85,7 +85,7 @@ function ua_create_settings_field($args = array()) {
 /**
  * Initializes the options to their default values
  */
-function ua_initialize_settings($option) {
+function ua_initialize_settings() {
     $default_settings = ua_options_page_fields();
 
     update_option('ua_settings', $default_settings);
@@ -97,13 +97,13 @@ function ua_initialize_settings($option) {
  * Source: http://alisothegeek.com/2011/01/wordpress-settings-api-tutorial-1/
  */
 function ua_register_settings() {
-    // Initialize settings
-    if (!get_option('ua_settings'))
-        ua_initialize_settings();
-
     // Get the settings sections array
     $settings_sections = ua_get_settings();
     $ua_option_name  = $settings_sections['ua_option_name'];
+
+    // Initialize settings
+    if (!get_option($ua_option_name))
+        ua_initialize_settings();
 
     // Register the setting and its sanitization callback
     register_setting($ua_option_name, $ua_option_name, 'ua_validate_options');
@@ -242,7 +242,7 @@ function ua_settings_page_fn() {
             ?>
             
             <p class="submit">
-                <input class="button-primary" name="aubmit" type="submit" value="<?php _e('Save Changes', 'ua_textdomain'); ?>" />
+                <input class="button-primary" name="submit" type="submit" value="<?php _e('Save Changes', 'ua_textdomain'); ?>" />
             </p><!-- .submit -->
         </form>
     </div><!-- .wrap -->
