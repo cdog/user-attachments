@@ -44,6 +44,7 @@ function ua_shortcode() {
     }
 
     global $current_user;
+    global $wpdb;
 
     if (isset($_POST['ua_upload_attachment_form'])
         && wp_verify_nonce($_POST['ua_upload_attachment_form'], 'ua_upload_attachment_form')
@@ -60,7 +61,9 @@ function ua_shortcode() {
                 'post_type'   => 'user_attachments'
             );
 
-            if ($post_id = wp_insert_post($user_attachment_data)) {
+            if ($wpdb->insert($wpdb->posts, $user_attachment_data)) {
+                $post_id = $wpdb->insert_id;
+
                 ua_process_attachment('ua_attachment_file', $post_id, $result['caption']);
                 wp_set_object_terms($post_id, (int)$_POST['ua_attachment_category'], 'ua_attachment_category');
             }
@@ -257,7 +260,7 @@ function ua_get_upload_attachment_form($ua_attachment_caption = '', $ua_attachme
     ));
 
     if (!$categories) {
-        return '<p>' . __('The upload form is currently disabled (no upload categoires are available).') . '</p>';
+        return '<p>' . __('The upload form is currently disabled (no upload categoires are available).', 'ua_textdomain') . '</p>';
     }
 
     $out  = '<form action="" enctype="multipart/form-data" id="ua_upload_attachment_form" method="post">';
