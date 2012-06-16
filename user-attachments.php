@@ -80,17 +80,17 @@ function ua_submit() {
         }
     }
 
-    if (isset($_POST['ua_form_delete'])
-        && wp_verify_nonce($_POST['ua_form_delete'], 'ua_form_delete')
-    ) {
-        if (isset($_POST['ua_attachment_delete_id'])) {
-            if ($user_attachments_deleted = ua_delete_user_attachments($_POST['ua_attachment_delete_id'])) {
-                echo '<p>' . $user_attachments_deleted . __(' attachment(s) deleted!', 'ua_textdomain') . '</p>';
+    if (!$ua) {
+        if (isset($_POST['ua_form_delete'])
+            && wp_verify_nonce($_POST['ua_form_delete'], 'ua_form_delete')
+        ) {
+            if (isset($_POST['ua_attachment_delete_id'])) {
+                if ($user_attachments_deleted = ua_delete_user_attachments($_POST['ua_attachment_delete_id'])) {
+                    echo '<p>' . $user_attachments_deleted . __(' attachment(s) deleted!', 'ua_textdomain') . '</p>';
+                }
             }
         }
-    }
 
-    if (!$ua) {
         echo ua_get_upload_attachment_form($ua_attachment_caption = $_POST['ua_attachment_caption'], $ua_attachment_category = $_POST['ua_attachment_category']);
 
         if ($user_attachments_table = ua_get_user_attachments_table($current_user->ID)) {
@@ -102,6 +102,16 @@ function ua_submit() {
 function ua_manage() {
     if (!is_user_logged_in()) {
         return '<p>' . __('You need to be logged in to manage the attachments.', 'ua_textdomain') . '</p>';
+    }
+
+    if (isset($_POST['ua_form_delete'])
+        && wp_verify_nonce($_POST['ua_form_delete'], 'ua_form_delete')
+    ) {
+        if (isset($_POST['ua_attachment_delete_id'])) {
+            if ($user_attachments_deleted = ua_delete_user_attachments($_POST['ua_attachment_delete_id'])) {
+                echo '<p>' . $user_attachments_deleted . __(' attachment(s) deleted!', 'ua_textdomain') . '</p>';
+            }
+        }
     }
 
     // Print the categories
@@ -143,6 +153,66 @@ function ua_manage() {
             echo '<br />';
         }
     }
+
+    $args = array(
+        'numberposts' => -1,
+        'post_status' => 'pending, publish',
+        'post_type'   => 'user_attachments'
+    );
+
+    $user_attachments = get_posts($args);
+
+    foreach ($user_attachments as $key => $user_attachment) {
+        $user_attachment_cats = get_the_terms($user_attachment->ID, 'ua_attachment_category');
+
+        foreach ($user_attachment_cats as $cat) {
+            $user_attachment_cat = $cat->term_id;
+        }
+
+        if ($user_attachment_cat != $cat_ID) {
+            unset($user_attachments[$key]);
+        }
+    }
+
+    echo '<hr />';
+    echo '<h2>' . __('Uploaded attachments') . '</h2>';
+
+    if (!$user_attachments) {
+        echo '<p>' . __('No user attachments found.', 'ua_textdomain') . '</p>';
+
+        return;
+    }
+
+    echo '<form action="" method="post">';
+    echo wp_nonce_field('ua_form_delete', 'ua_form_delete');
+    echo '<table id="user_attachments">';
+    echo '<thead><th>' . __('Attachment', 'ua_textdomain') . '</th><th>' . __('Caption', 'ua_textdomain') . '</th><th>' . __('Posted By', 'ua_textdomain') . '</th><th>' . __('Action', 'ua_textdomain') . '</th></thead>';
+
+    foreach ($user_attachments as $user_attachment) {
+        $args = array(
+            'numberposts' => -1,
+            'post_parent' => $user_attachment->ID,
+            'post_type'   => 'attachment'
+        );
+
+        $attachments = get_posts($args);
+
+        if ($attachments) {
+            $post_attachment_id = $attachments[0]->ID;
+        }
+
+        echo wp_nonce_field('ua_attachment_delete_' . $user_attachment->ID, 'ua_attachment_delete_id_' . $user_attachment->ID, false);
+        echo '<tr>';
+        echo '<td>' . wp_get_attachment_link($post_attachment_id) . '</td>';
+        echo '<td>' . $user_attachment->post_title . '</td>';
+        echo '<td>' . get_the_author_meta('display_name', $user_id) . '</td>';
+        echo '<td class="align_center"><input name="ua_attachment_delete_id[]" type="checkbox" value="' . $user_attachment->ID . '" /></td>';
+        echo '</tr>';
+    }
+
+    echo '</table>';
+    echo '<input name="ua_delete" type="submit" value="' . __('Delete Selected Attachments', 'ua_textdomain') . '" />';
+    echo '</form>';
 }
 
 function ua_delete_user_attachments($attachments) {
