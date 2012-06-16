@@ -36,18 +36,24 @@ define('TYPE_WHITELIST',  serialize(array(
 define('UA_PLUGIN_PATH',  plugin_dir_path(__FILE__));
 define('UA_PLUGIN_URL',   plugin_dir_url(__FILE__));
 
-add_shortcode('user_attachments', 'ua_shortcode');
+add_shortcode('submit_user_attachments', 'ua_submit');
+add_shortcode('manage_user_attachments', 'ua_manage');
 
-function ua_shortcode() {
+// Used to control the execution (temp)
+$ua = false;
+
+function ua_submit() {
     if (!is_user_logged_in()) {
         return '<p>' . __('You need to be logged in to submit an attachment.', 'ua_textdomain') . '</p>';
     }
 
+    global $ua;
     global $current_user;
     global $wpdb;
 
     if (isset($_POST['ua_upload_attachment_form'])
         && wp_verify_nonce($_POST['ua_upload_attachment_form'], 'ua_upload_attachment_form')
+        && !$ua
     ) {
         $result = ua_parse_file_errors($_FILES['ua_attachment_file'], $_POST['ua_attachment_caption']);
 
@@ -61,11 +67,15 @@ function ua_shortcode() {
                 'post_type'   => 'user_attachments'
             );
 
+            $ua = true;
+
             if ($wpdb->insert($wpdb->posts, $user_attachment_data)) {
                 $post_id = $wpdb->insert_id;
 
                 ua_process_attachment('ua_attachment_file', $post_id, $result['caption']);
                 wp_set_object_terms($post_id, (int)$_POST['ua_attachment_category'], 'ua_attachment_category');
+
+                $ua = false;
             }
         }
     }
@@ -80,10 +90,58 @@ function ua_shortcode() {
         }
     }
 
-    echo ua_get_upload_attachment_form($ua_attachment_caption = $_POST['ua_attachment_caption'], $ua_attachment_category = $_POST['ua_attachment_category']);
+    if (!$ua) {
+        echo ua_get_upload_attachment_form($ua_attachment_caption = $_POST['ua_attachment_caption'], $ua_attachment_category = $_POST['ua_attachment_category']);
 
-    if ($user_attachments_table = ua_get_user_attachments_table($current_user->ID)) {
-        echo $user_attachments_table;
+        if ($user_attachments_table = ua_get_user_attachments_table($current_user->ID)) {
+            echo $user_attachments_table;
+        }
+    }
+}
+
+function ua_manage() {
+    if (!is_user_logged_in()) {
+        return '<p>' . __('You need to be logged in to manage the attachments.', 'ua_textdomain') . '</p>';
+    }
+
+    // Print the categories
+    $categories = get_categories(array(
+        'echo'       => 0,
+        'hide_empty' => 0,
+        'taxonomy'   => 'ua_attachment_category',
+        'type'       => 'user_attachments'
+    ));
+
+    if (!$categories) {
+        echo '<p>' . __('No attachments categories found.', 'ua_textdomain') . '</p>';
+
+        return;
+    }
+
+    echo '<h2>' . __('Categories', 'ua_textdomain') . '</h2>';
+
+    $url    = get_permalink(get_the_ID());
+    $cat_ID = $_GET['ua_cat'];
+    $i      = 0;
+
+    foreach ($categories as $cat) {
+        if (!$cat_ID) {
+            $cat_ID = $cat->cat_ID;
+        }
+
+        echo '<a href="' . add_query_arg('ua_cat', $cat->cat_ID, $url) . '">';
+
+        if ($cat_ID == $cat->cat_ID) {
+            echo '<strong>' . $cat->name . '</strong>';
+        } else {
+            echo $cat->name;
+        }
+
+        echo '</a>';
+
+        if (++$i < count($categories)) {
+            echo '<br />';
+        }
     }
 }
 
@@ -200,14 +258,15 @@ function ua_process_attachment($file, $post_id, $caption) {
     require_once ABSPATH . 'wp-admin' . '/includes/file.php';
     require_once ABSPATH . 'wp-admin' . '/includes/media.php';
 
+    global $wpdb;
+
     $attachment_id = media_handle_upload($file, $post_id);
 
     $attachment_data = array(
-        'ID'           => $attachment_id,
         'post_excerpt' => $caption
     );
 
-    wp_update_post($attachment_data);
+    $wpdb->update($wpdb->posts, $attachment_data, array('ID' => $attachment_id));
 
     return $attachment_id;
 }
