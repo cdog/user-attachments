@@ -36,73 +36,40 @@ define('TYPE_WHITELIST',  serialize(array(
 define('UA_PLUGIN_PATH',  plugin_dir_path(__FILE__));
 define('UA_PLUGIN_URL',   plugin_dir_url(__FILE__));
 
+add_action('init', 'ua_init');
+add_action('init', 'ua_delete_user_attachments');
 add_action('init', 'ua_download_user_attachments');
+add_action('init', 'ua_upload_user_attachments');
 
-add_shortcode('submit_user_attachments', 'ua_submit');
 add_shortcode('manage_user_attachments', 'ua_manage');
+add_shortcode('submit_user_attachments', 'ua_submit');
 
-// Used to control the execution (temp)
-$ua = false;
+function ua_message() {
+    if ($_SESSION['ua_message']) {
+        echo '<p>' . $_SESSION['ua_message'] . '</p>';
+
+        unset($_SESSION['ua_message']);
+    }
+}
 
 function ua_submit() {
     if (!is_user_logged_in()) {
         return '<p>' . __('You need to be logged in to submit an attachment.', 'ua_textdomain') . '</p>';
     }
 
-    global $ua;
     global $current_user;
-    global $wpdb;
 
     get_currentuserinfo();
 
-    if (isset($_POST['ua_upload_attachment_form'])
-        && wp_verify_nonce($_POST['ua_upload_attachment_form'], 'ua_upload_attachment_form')
-        && !$ua
-    ) {
-        $result = ua_parse_file_errors($_FILES['ua_attachment_file'], $_POST['ua_attachment_caption']);
+    ua_message();
 
-        if ($result['error']) {
-            echo '<p>' . __('ERROR: ', 'ua_textdomain') . $result['error'] . '</p>';
-        } else {
-            $user_attachment_data = array(
-                'post_author' => $current_user->ID,
-                'post_status' => 'pending',
-                'post_title'  => $result['caption'],
-                'post_type'   => 'user_attachments'
-            );
+    $out = ua_get_upload_attachment_form();
 
-            $ua = true;
-
-            if ($wpdb->insert($wpdb->posts, $user_attachment_data)) {
-                $post_id = $wpdb->insert_id;
-
-                ua_process_attachment('ua_attachment_file', $post_id, $result['caption']);
-                wp_set_object_terms($post_id, (int)$_POST['ua_attachment_category'], 'ua_attachment_category');
-
-                $ua = false;
-            }
-        }
+    if ($user_attachments_table = ua_get_user_attachments_table($current_user->ID)) {
+        $out .= $user_attachments_table;
     }
 
-    if (!$ua) {
-        if (isset($_POST['ua_form_delete'])
-            && wp_verify_nonce($_POST['ua_form_delete'], 'ua_form_delete')
-        ) {
-            if (isset($_POST['ua_delete'])) {
-                if (isset($_POST['ua_attachment_action_id'])) {
-                    if ($user_attachments_deleted = ua_delete_user_attachments()) {
-                        echo '<p>' . $user_attachments_deleted . __(' attachment(s) deleted!', 'ua_textdomain') . '</p>';
-                    }
-                }
-            }
-        }
-
-        echo ua_get_upload_attachment_form($ua_attachment_caption = $_POST['ua_attachment_caption'], $ua_attachment_category = $_POST['ua_attachment_category']);
-
-        if ($user_attachments_table = ua_get_user_attachments_table($current_user->ID)) {
-            echo $user_attachments_table;
-        }
-    }
+    return $out;
 }
 
 function ua_manage() {
@@ -118,17 +85,7 @@ function ua_manage() {
         return '<p>' . __('You don\'t have the right permissions to manage the attachments.', 'ua_textdomain') . '</p>';
     }
 
-    if (isset($_POST['ua_form_manage'])
-        && wp_verify_nonce($_POST['ua_form_manage'], 'ua_form_manage')
-    ) {
-        if (isset($_POST['ua_attachment_action_id'])) {
-            if (isset($_POST['ua_delete'])) {
-                if ($user_attachments_deleted = ua_delete_user_attachments()) {
-                    echo '<p>' . $user_attachments_deleted . __(' attachment(s) deleted!', 'ua_textdomain') . '</p>';
-                }
-            }
-        }
-    }
+    ua_message();
 
     // Print the categories
     $categories = get_categories(array(
@@ -139,12 +96,12 @@ function ua_manage() {
     ));
 
     if (!$categories) {
-        echo '<p>' . __('No attachments categories found.', 'ua_textdomain') . '</p>';
+        $out = '<p>' . __('No attachments categories found.', 'ua_textdomain') . '</p>';
 
-        return;
+        return $out;
     }
 
-    echo '<h2>' . __('Categories', 'ua_textdomain') . '</h2>';
+    $out = '<h2>' . __('Categories', 'ua_textdomain') . '</h2>';
 
     $url    = get_permalink(get_the_ID());
     $cat_ID = $_GET['ua_cat'];
@@ -155,18 +112,18 @@ function ua_manage() {
             $cat_ID = $cat->cat_ID;
         }
 
-        echo '<a href="' . add_query_arg('ua_cat', $cat->cat_ID, $url) . '">';
+        $out .= '<a href="' . add_query_arg('ua_cat', $cat->cat_ID, $url) . '">';
 
         if ($cat_ID == $cat->cat_ID) {
-            echo '<strong>' . $cat->name . '</strong>';
+            $out .= '<strong>' . $cat->name . '</strong>';
         } else {
-            echo $cat->name;
+            $out .= $cat->name;
         }
 
-        echo '</a>';
+        $out .= '</a>';
 
         if (++$i < count($categories)) {
-            echo '<br />';
+            $out .= '<br />';
         }
     }
 
@@ -192,19 +149,19 @@ function ua_manage() {
         }
     }
 
-    echo '<hr />';
-    echo '<h2>' . __('Uploaded attachments') . '</h2>';
+    $out .= '<hr />';
+    $out .= '<h2>' . __('Uploaded attachments') . '</h2>';
 
     if (!$user_attachments) {
-        echo '<p>' . __('No user attachments found.', 'ua_textdomain') . '</p>';
+        $out .= '<p>' . __('No user attachments found.', 'ua_textdomain') . '</p>';
 
-        return;
+        return $out;
     }
 
-    echo '<form action="" method="post">';
-    echo wp_nonce_field('ua_form_manage', 'ua_form_manage');
-    echo '<table id="user_attachments">';
-    echo '<thead><th>' . __('Attachment', 'ua_textdomain') . '</th><th>' . __('Caption', 'ua_textdomain') . '</th><th>' . __('Posted By', 'ua_textdomain') . '</th><th>' . __('Action', 'ua_textdomain') . '</th></thead>';
+    $out .= '<form action="" method="post">';
+    $out .= wp_nonce_field('ua_form', 'ua_form');
+    $out .= '<table id="user_attachments">';
+    $out .= '<thead><th>' . __('Attachment', 'ua_textdomain') . '</th><th>' . __('Caption', 'ua_textdomain') . '</th><th>' . __('Posted By', 'ua_textdomain') . '</th><th>' . __('Action', 'ua_textdomain') . '</th></thead>';
 
     foreach ($user_attachments as $user_attachment) {
         $args = array(
@@ -219,23 +176,33 @@ function ua_manage() {
             $post_attachment_id = $attachments[0]->ID;
         }
 
-        echo wp_nonce_field('ua_attachment_action_' . $user_attachment->ID, 'ua_attachment_action_id_' . $user_attachment->ID, false);
-        echo '<tr>';
-        echo '<td>' . wp_get_attachment_link($post_attachment_id) . '</td>';
-        echo '<td>' . $user_attachment->post_title . '</td>';
-        echo '<td>' . get_the_author_meta('display_name', $user_attachment->post_author) . '</td>';
-        echo '<td class="align_center"><input name="ua_attachment_action_id[]" type="checkbox" value="' . $user_attachment->ID . '" /></td>';
-        echo '</tr>';
+        $out .= wp_nonce_field('ua_attachment_action_' . $user_attachment->ID, 'ua_attachment_action_id_' . $user_attachment->ID, false);
+        $out .= '<tr>';
+        $out .= '<td>' . wp_get_attachment_link($post_attachment_id) . '</td>';
+        $out .= '<td>' . $user_attachment->post_title . '</td>';
+        $out .= '<td>' . get_the_author_meta('display_name', $user_attachment->post_author) . '</td>';
+        $out .= '<td class="align_center"><input name="ua_attachment_action_id[]" type="checkbox" value="' . $user_attachment->ID . '" /></td>';
+        $out .= '</tr>';
     }
 
-    echo '</table>';
-    echo '<input name="ua_download" type="submit" value="' . __('Download Selected Attachments', 'ua_textdomain') . '" />';
-    echo ' ';
-    echo '<input name="ua_delete" type="submit" value="' . __('Delete Selected Attachments', 'ua_textdomain') . '" />';
-    echo '</form>';
+    $out .= '</table>';
+    $out .= '<input name="ua_download" type="submit" value="' . __('Download Selected Attachments', 'ua_textdomain') . '" />';
+    $out .= ' ';
+    $out .= '<input name="ua_delete" type="submit" value="' . __('Delete Selected Attachments', 'ua_textdomain') . '" />';
+    $out .= '</form>';
+
+    return $out;
 }
 
 function ua_delete_user_attachments() {
+    if (!isset($_POST['ua_form'])
+        || !wp_verify_nonce($_POST['ua_form'], 'ua_form')
+        || !isset($_POST['ua_delete'])
+        || !isset($_POST['ua_attachment_action_id'])
+    ) {
+        return;
+    }
+
     $attachments = $_POST['ua_attachment_action_id'];
     $attachments_deleted = 0;
 
@@ -262,11 +229,15 @@ function ua_delete_user_attachments() {
         }
     }
 
-    return $attachments_deleted;
+    $_SESSION['ua_message'] = $attachments_deleted . __(' attachment(s) deleted!', 'ua_textdomain');
 }
 
 function ua_download_user_attachments() {
-    if (!isset($_POST['ua_attachment_action_id'])) {
+    if (!isset($_POST['ua_form'])
+        || !wp_verify_nonce($_POST['ua_form'], 'ua_form')
+        || !isset($_POST['ua_download'])
+        || !isset($_POST['ua_attachment_action_id'])
+    ) {
         return;
     }
 
@@ -313,6 +284,41 @@ function ua_download_user_attachments() {
     exit();
 }
 
+function ua_upload_user_attachments() {
+    if (!isset($_POST['ua_upload_attachment_form'])
+        || !wp_verify_nonce($_POST['ua_upload_attachment_form'], 'ua_upload_attachment_form')
+    ) {
+        return;
+    }
+
+    global $current_user;
+    global $wpdb;
+
+    get_currentuserinfo();
+
+    $result = ua_parse_file_errors($_FILES['ua_attachment_file'], $_POST['ua_attachment_caption']);
+
+    if ($result['error']) {
+        $_SESSION['ua_message'] = __('ERROR: ', 'ua_textdomain') . $result['error'];
+
+        return;
+    }
+
+    $user_attachment_data = array(
+        'post_author' => $current_user->ID,
+        'post_status' => 'pending',
+        'post_title'  => $result['caption'],
+        'post_type'   => 'user_attachments'
+    );
+
+    if ($wpdb->insert($wpdb->posts, $user_attachment_data)) {
+        $post_id = $wpdb->insert_id;
+
+        ua_process_attachment('ua_attachment_file', $post_id, $result['caption']);
+        wp_set_object_terms($post_id, (int)$_POST['ua_attachment_category'], 'ua_attachment_category');
+    }
+}
+
 function ua_get_user_attachments_table($user_id) {
     // Build the exclude array
     $exclude    = array();
@@ -352,7 +358,7 @@ function ua_get_user_attachments_table($user_id) {
     $out  = '<hr />';
     $out .= '<h2>' . __('Pending attachments', 'ua_textdomain') . '</h2>';
     $out .= '<form action="" method="post">';
-    $out .= wp_nonce_field('ua_form_delete', 'ua_form_delete');
+    $out .= wp_nonce_field('ua_form', 'ua_form');
     $out .= '<table id="user_attachments">';
     $out .= '<thead><th>' . __('Attachment', 'ua_textdomain') . '</th><th>' . __('Caption', 'ua_textdomain') . '</th><th>' . __('Category', 'ua_textdomain') . '</th><th>' . __('Action', 'ua_textdomain') . '</th></thead>';
 
@@ -439,7 +445,7 @@ function ua_parse_file_errors($file = '', $attachment_caption) {
     return $result;
 }
 
-function ua_get_upload_attachment_form($ua_attachment_caption = '', $ua_attachment_category = 0) {
+function ua_get_upload_attachment_form() {
     // Build the exclude array
     $exclude    = array();
     $ua_options = get_option('ua_settings');
@@ -464,18 +470,18 @@ function ua_get_upload_attachment_form($ua_attachment_caption = '', $ua_attachme
     $out  = '<form action="" enctype="multipart/form-data" id="ua_upload_attachment_form" method="post">';
     $out .= wp_nonce_field('ua_upload_attachment_form', 'ua_upload_attachment_form');
     $out .= '<label for="ua_attachment_caption">' . __('Attachment Caption', 'ua_textdomain') . '</label><br />';
-    $out .= '<input id="ua_attachment_caption" name="ua_attachment_caption" type="text" value="' . $ua_attachment_caption . '"/><br />';
+    $out .= '<input id="ua_attachment_caption" name="ua_attachment_caption" type="text" /><br />';
     $out .= '<label for="ua_attachment_category">' . __('Attachment Category', 'ua_textdomain') . '</label><br />';
-    $out .= ua_get_attachment_categories_dropdown('ua_attachment_category', $ua_attachment_category) . '<br />';
+    $out .= ua_get_attachment_categories_dropdown('ua_attachment_category') . '<br />';
     $out .= '<label for="ua_attachment_file">' . __('Select Your Attachment', 'ua_textdomain') . '</label><br />';
-    $out .= '<input id="ua_attachment_file" name="ua_attachment_file" type="file"><br />';
-    $out .= '<input id="ua_submit" name="ua_submit" type="submit" value="' . __('Upload Attachment', 'ua_textdomain') . '">';
+    $out .= '<input id="ua_attachment_file" name="ua_attachment_file" type="file" /><br />';
+    $out .= '<input id="ua_submit" name="ua_submit" type="submit" value="' . __('Upload Attachment', 'ua_textdomain') . '" />';
     $out .= '</form>';
 
     return $out;
 }
 
-function ua_get_attachment_categories_dropdown($taxonomy, $selected) {
+function ua_get_attachment_categories_dropdown($taxonomy) {
     // Build the exclude array
     $exclude    = array();
     $ua_options = get_option('ua_settings');
@@ -491,14 +497,17 @@ function ua_get_attachment_categories_dropdown($taxonomy, $selected) {
         'exclude'    => $exclude,
         'hide_empty' => 0,
         'name'       => 'ua_attachment_category',
-        'selected'   => $selected,
         'taxonomy'   => $taxonomy
     ));
 }
 
-add_action('init', 'ua_init');
-
 function ua_init() {
+    // Start session
+    if (!session_id()) {
+        session_start();
+    }
+
+    // Register Attachment post type
     $attachment_type_labels = array(
         'add_new'            => _x('Add New', 'attachment', 'ua_textdomain'),
         'add_new_item'       => __('Add New', 'ua_textdomain'),
@@ -529,6 +538,7 @@ function ua_init() {
 
     register_post_type('user_attachments', $attachment_type_args);
 
+    // Register ua_attachment_category taxonomy
     $attachment_category_labels = array(
         'add_new_item'      => __('Add New Category', 'ua_textdomain'),
         'all_items'         => __('All Categories', 'ua_textdomain'),
